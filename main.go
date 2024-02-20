@@ -1,6 +1,6 @@
 package main
 
-import ()
+import "github.com/gofiber/fiber/v2"
 
 type MongoInstance struct {
 	Client
@@ -19,6 +19,18 @@ type Employee struct {
 	Salary float64 `json:"salary"`
 }
 
-func main() {
+func ConnectDatabase() error {
 
+}
+
+func main() {
+	app := fiber.New()
+
+	app.Get("/employee")
+
+	app.Post("/employee")
+
+	app.Put("/employee/:id")
+
+	app.Delete("/employee/:id")
 }
