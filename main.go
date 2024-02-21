@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
@@ -12,8 +13,8 @@ import (
 )
 
 type MongoInstance struct {
-	Client
-	Db
+	Client *mongo.Client
+	Db     *mongo.Database
 }
 
 var mg MongoInstance
@@ -29,12 +30,26 @@ type Employee struct {
 }
 
 func ConnectDatabase() error {
-	client, err := mongo.newClient(options.Client().ApplyURI(MONGO_URI))
+	client, err := mongo.NewClient(options.Client().ApplyURI(MONGO_URI))
 
-	context.withTimeOut(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+
+	defer cancel()
+
+	err = client.Connect(ctx)
+
+	db := client.Database(DB_NAME)
+
 	if err != nil {
-
+		return err
 	}
+
+	mg = MongoInstance{
+		Client: client,
+		Db:     db,
+	}
+
+	return nil
 }
 
 func main() {
