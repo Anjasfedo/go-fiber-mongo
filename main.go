@@ -1,6 +1,15 @@
 package main
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"context"
+	"log"
+
+	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+)
 
 type MongoInstance struct {
 	Client
@@ -10,7 +19,7 @@ type MongoInstance struct {
 var mg MongoInstance
 
 const DB_NAME = "fiber-mongo"
-const MONGO_URL = "mongodb://localhost:27017" + DB_NAME
+const MONGO_URI = "mongodb://localhost:27017" + DB_NAME
 
 type Employee struct {
 	Id     int64   `json:"id"`
@@ -20,13 +29,25 @@ type Employee struct {
 }
 
 func ConnectDatabase() error {
+	client, err := mongo.newClient(options.Client().ApplyURI(MONGO_URI))
 
+	context.withTimeOut(context.Background())
+	if err != nil {
+
+	}
 }
 
 func main() {
+
+	if err := ConnectDatabase(); err != nil {
+		log.Fatal(err)
+	}
+
 	app := fiber.New()
 
-	app.Get("/employee")
+	app.Get("/employee", func(c *fiber.Ctx) error {
+
+	})
 
 	app.Post("/employee")
 
