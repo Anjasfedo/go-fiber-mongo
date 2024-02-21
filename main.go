@@ -23,7 +23,7 @@ const DB_NAME = "fiber-mongo"
 const MONGO_URI = "mongodb://localhost:27017" + DB_NAME
 
 type Employee struct {
-	Id     int64   `json:"id,omitempty" bson:"_id, omitempty"`
+	Id     string  `json:"id,omitempty" bson:"_id, omitempty"`
 	Name   string  `json:"name"`
 	Age    int64   `json:"age"`
 	Salary float64 `json:"salary"`
@@ -77,7 +77,32 @@ func main() {
 		return c.JSON(employees)
 	})
 
-	app.Post("/employee")
+	app.Post("/employee", func(c *fiber.Ctx) error {
+		collection := mg.Db.Collection("employees")
+
+		employee := new(Employee)
+
+		if err := c.BodyParser(employee); err != nil {
+			return c.Status(400).SendString(err.Error())
+		}
+
+		employee.Id = ""
+
+		insertResult, err := collection.InsertOne(c.Context(), employee)
+		if err != nil {
+			return c.Status(500).SendString(err.Error())
+		}
+
+		filter := bson.D{{Key: "_id", Value: insertResult.InsertedID}}
+
+		createdRecord := collection.FindOne(c.Context(), filter)
+
+		createdEmployee := &Employee{}
+
+		createdRecord.Decode(createdEmployee)
+
+		return c.Status(201).JSON(createdEmployee)
+	})
 
 	app.Put("/employee/:id")
 
