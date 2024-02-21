@@ -146,5 +146,26 @@ func main() {
 
 	})
 
-	app.Delete("/employee/:id")
+	app.Delete("/employee/:id", func(c *fiber.Ctx) error {
+		employeeId, err := primitive.ObjectIDFromHex(c.Params("id"))
+		if err != nil {
+			return c.SendStatus(400)
+		}
+
+		filterQ := bson.D{{Key: "_id", Value: employeeId}}
+
+		result, err := mg.Db.Collection("employees").DeleteOne(c.Context(), filterQ)
+		if err != nil {
+			return c.SendStatus(500)
+		}
+
+		if result.DeletedCount < 1 {
+			return c.SendStatus(404)
+		}
+
+		return c.Status(200).JSON("Deleted")
+
+	})
+
+	log.Fatal(app.Listen(":3000"))
 }
