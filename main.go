@@ -93,9 +93,9 @@ func main() {
 			return c.Status(500).SendString(err.Error())
 		}
 
-		filter := bson.D{{Key: "_id", Value: insertResult.InsertedID}}
+		filterQ := bson.D{{Key: "_id", Value: insertResult.InsertedID}}
 
-		createdRecord := collection.FindOne(c.Context(), filter)
+		createdRecord := collection.FindOne(c.Context(), filterQ)
 
 		createdEmployee := &Employee{}
 
@@ -104,7 +104,47 @@ func main() {
 		return c.Status(201).JSON(createdEmployee)
 	})
 
-	app.Put("/employee/:id")
+	app.Put("/employee/:id", func(c *fiber.Ctx) error {
+		IdParam := c.Params("id")
+
+		employeeId, err := primitive.ObjectIDFromHex(IdParam)
+		if err != nil {
+			return c.SendStatus(400)
+		}
+
+		employee := new(Employee)
+
+		if err := c.BodyParser(employee); err != nil {
+			return c.Status(400).SendString(err.Error())
+		}
+
+		filterQ := bson.D{{Key: "_id", Value: employeeId}}
+
+		updateQ := bson.D{
+			{
+				Key: "$set",
+				Value: bson.D{
+					{Key: "name", Value: employee.Name},
+					{Key: "age", Value: employee.Age},
+					{Key: "salary", Value: employee.Salary},
+				},
+			},
+		}
+
+		err = mg.Db.Collection("employees").FindOneAndUpdate(c.Context(), filterQ, updateQ).Err()
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				return c.SendStatus(400)
+			}
+
+			return c.SendStatus(500)
+		}
+
+		employee.Id = IdParam
+
+		return c.Status(200).JSON(employee)
+
+	})
 
 	app.Delete("/employee/:id")
 }
